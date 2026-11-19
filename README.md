@@ -21,7 +21,7 @@ Animation Direction [optional]: <look you want>
 ```
 
 
-The render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. You get the `.mp4` path back when it's done.
+The render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. You get the `.mp4` path back when it's done. Visit here to view [orchestration](https://github.com/JaydenYip3/Video-Orchestration) model that ties this whole video process.
 
 ## Setup
 
