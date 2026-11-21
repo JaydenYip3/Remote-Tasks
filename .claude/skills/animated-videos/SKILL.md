@@ -1,105 +1,70 @@
 ---
 name: animated-videos
-description: Hand off an animated-video job to the remote Linux server. Use when the user wants an animated video (voiceover, silent, or character-driven). First sends the user an HTML form (video type, then script / voice model / animation style / scene direction as needed) and reads back the answers they paste, then wakes the server over LAN, SSHes into /root/code/orchestration, starts a Claude agent there with the formatted request, waits for it to finish, then powers the server off. This agent only collects inputs and forwards the request; it does not make the video itself.
+description: Hand off an animated-video job to the remote Linux server. Use when the user wants an animated video (voiceover, silent, or character-driven). First asks the user in chat (one multiple-choice prompt for video type, format, model and effort, then voice model, script and scene direction as needed), then wakes the server over LAN, SSHes into /root/code/orchestration, starts a Claude agent there with the formatted request, waits for it to finish, then powers the server off. This agent only collects inputs and forwards the request; it does not make the video itself.
 ---
 
 # Animated videos (remote hand-off)
 
-Your only job is to collect the user's choices with the form below,
+Your only job is to collect the user's choices with the questions below,
 format them, and forward them to an agent on the remote server. Do not write,
 edit or improve the script, do not plan the animation, and do not do any of
 the video work locally.
 
-## 1. Collect the answers with the form
+## 1. Collect the answers in chat
 
-The questions live in one HTML form, [`form.html`](form.html), next to this
-file. It shows only the questions that apply to the chosen video type, checks
-required fields, and gives the user a `VIDEO_REQUEST {...}` JSON block to paste
-back. You don't need to ask the questions one by one.
+Ask everything in the chat with `AskUserQuestion`, so the user answers in
+place and their answers come back as soon as they press submit. Don't send a
+link or a file for this.
 
-### Send the form
+If the user already gave an answer when invoking the skill (for example they
+pasted a script or said "vertical"), use it and leave that question out.
 
-1. Publish `form.html` with the Artifact tool and give the user the link. If
-   you already published it in this conversation, republish the same
-   `file_path` instead of creating a new artifact. Don't change the file.
-2. If the Artifact tool isn't available, send the file with `SendUserFile`.
-3. If neither works, or the user says they'd rather answer in chat, use the
-   [chat fallback](#chat-fallback) below.
+### Step 1: one prompt with the general options
 
-Then ask the user to fill it in, press **Send**, and paste the result back. Wait
-for the reply.
+Send **one** `AskUserQuestion` call with these four questions together:
 
-If the user already gave every answer when invoking the skill (for example
-they pasted a script and said what they want), skip the form. If they gave some
-answers, still send the form and tell them which of their answers you'll use.
-
-If the user picks Fable, remind them in your reply that it only works if the
-account on the render machine has Fable access, and that the job stops before
-it starts if it doesn't.
-
-### Read the pasted result
-
-The user pastes a block like this:
-
-```
-VIDEO_REQUEST {
-  "type": "voiceover",
-  "script": "…",
-  "voice_model": "v1",
-  "model": "opus",
-  "effort": "high",
-  "format": "horizontal",
-  "style": "sci-fi-sitcom-thinline",
-  "direction": "skip"
-}
-```
-
-| Field | Values | Shown for |
+| Header | Question | Options (first is the default) |
 |---|---|---|
-| `type` | `voiceover`, `silent` | always |
-| `script` | text, verbatim | voiceover (required) |
-| `voice_model` | `v1` (default), `v2` | voiceover |
-| `model` | `opus` (default), `fable` | voiceover, silent |
-| `effort` | `low`, `medium`, `high` (default), `xhigh`, `max` | voiceover, silent |
-| `format` | `horizontal` (16:9, 1920×1080, default), `vertical` (9:16, 1080×1920) | voiceover, silent |
-| `style` | `sci-fi-sitcom-thinline` (the only style for now) | voiceover, silent |
-| `direction` | text, verbatim, or `skip` | voiceover (optional), silent (required) |
+| Video type | What type of animated video? | Voiceover animation (a narrator reads your script) · Silent animation (music and sound effects, no narration) · Character-driven animation (WIP) |
+| Format | Horizontal or vertical? | Horizontal 16:9 (Recommended) (1920×1080, YouTube and desktop) · Vertical 9:16 (1080×1920, Shorts, Reels, TikTok) |
+| Model | Which model should the render agent use? | Opus (Recommended) (works on any plan) · Fable (most capable, needs Fable access) |
+| Effort | How much effort? | High (Recommended) · Medium · Low · Xhigh. Say in the question that "max" can be typed in Other. |
 
-The styles must match the options in `form.html`. When a new style is added
-in `~/code/videos/.claude/skills/`, update both files (see the README).
+Map the answers to these values: `type` = `voiceover` / `silent`,
+`format` = `horizontal` / `vertical`, `model` = `opus` / `fable`,
+`effort` = `low` / `medium` / `high` / `xhigh` / `max`. If a question comes
+back unanswered, use the default.
 
-- Parse it as JSON. Use `script` and `direction` exactly as given, with
-  their wording, line breaks and punctuation.
-- If a field is missing, use the default: `v1` for `voice_model`,
-  `opus` for `model`, `high` for `effort`, `horizontal` for `format`, `sci-fi-sitcom-thinline` for `style`, `skip` for `direction`.
-- If `type` is `voiceover` and `script` is missing or empty, ask for the
-  script. If `type` is `silent` and `direction` is `skip`, ask once for at
-  least a topic or a one-line description.
-- The form blocks character-driven videos. If one still comes through, say
-  it's a work in progress and offer voiceover or silent. Don't wake the server.
-- If the paste isn't valid JSON, ask the user to copy it again with the
-  form's **Copy** button. Don't guess what it meant.
+- **Character-driven:** say it's still a work in progress and offer voiceover
+  or silent. Stop there. Don't wake the server.
+- **Fable:** remind the user that it only works if the account on the render
+  machine has Fable access, and that the job stops before it starts if it
+  doesn't.
 
-### Chat fallback
+### Step 2: voice model (voiceover only)
 
-Ask the same questions one at a time. Use `AskUserQuestion` for multiple
-choice and a plain message for free text:
+One `AskUserQuestion` call: "Which voice model?" with `v1 (Recommended)` and
+`v2`. Default `v1`.
 
-1. **Video type:** Voiceover animation / Silent animation / Character-driven
-   animation (WIP). Character-driven isn't built yet, so offer the other two
-   and stop.
-2. **Voiceover only:** the script (free text, required, verbatim), then the
-   voice model: `v1 (Recommended)` / `v2`.
-3. **Model:** Opus (Recommended) / Fable. If they pick Fable, remind them it
-   needs Fable access on the render machine's account.
-4. **Effort:** low / medium / high (Recommended) / xhigh / max. Offer four of
-   these as options and let "Other" cover the fifth.
-5. **Format:** Horizontal (16:9) (Recommended) / Vertical (9:16).
-6. **Animation style:** `sci-fi-sitcom-thinline` is the only style for now,
-   so don't ask. Tell the user it will be used.
-7. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
-   (Describe it, or say 'skip' to let the server decide.)" Required for
-   silent videos, so ask once more if it's skipped.
+### Animation style
+
+`sci-fi-sitcom-thinline` is the only style for now, so don't ask. Mention it
+in the summary. When a new style skill is added in
+`~/code/videos/.claude/skills/`, add a Style question to step 1's prompt
+(or step 2's, since step 1 already has four questions) and list the styles
+here (see the README).
+
+### Step 3: text, as plain messages
+
+Free text doesn't fit the multiple-choice prompt, so ask in plain messages,
+one at a time, and wait for each reply:
+
+1. **Script (voiceover only, required):** "Send the script." Keep it exactly
+   as given: wording, line breaks and punctuation. Don't continue without it.
+2. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
+   (Describe it, or say 'skip' to let the server decide.)" Pass it along
+   verbatim. For a silent video this is the content brief, so if the user
+   skips it, ask once more for at least a topic or a one-line description.
 
 ## 2. Write the prompt file
 
@@ -170,7 +135,7 @@ that fit the scenes. On-screen text is fine if it suits the style.
 .claude/skills/animated-videos/scripts/remote-task.sh --model <model> --effort <effort> -f <scratchpad>/video-prompt.md
 ```
 
-`--model` and `--effort` take the values from the form. They're passed to the
+`--model` and `--effort` take the values from step 1. They're passed to the
 remote `claude`, not written into the prompt.
 
 Run it with `run_in_background: true` (renders can take a long time) and
