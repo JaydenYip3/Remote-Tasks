@@ -15,7 +15,7 @@ Each job type is a skill in `.claude/skills/`. Start one with `/<skill-name>` an
 Makes a short animated video. Run `/animated-videos` and Claude asks you everything in the chat. The general options come first, as one multiple-choice prompt that goes through when you press submit. The text (script, direction) comes last, as plain messages:
 
 ```
-1. One prompt: video type · format (horizontal | vertical) · model (Opus | Fable) · effort (low to max)
+1. One prompt: video type · format (vertical, the default | horizontal) · model (Opus | Fable) · effort (low to max)
    └─ Character-driven → WIP, not implemented yet
 2. Voiceover only: voice model (v1 | v2)
 3. Text: script (voiceover only) → scenes / direction / mood (required for silent)

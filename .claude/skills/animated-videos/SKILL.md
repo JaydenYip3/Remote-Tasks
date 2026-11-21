@@ -26,7 +26,7 @@ Send **one** `AskUserQuestion` call with these four questions together:
 | Header | Question | Options (first is the default) |
 |---|---|---|
 | Video type | What type of animated video? | Voiceover animation (a narrator reads your script) · Silent animation (music and sound effects, no narration) · Character-driven animation (WIP) |
-| Format | Horizontal or vertical? | Horizontal 16:9 (Recommended) (1920×1080, YouTube and desktop) · Vertical 9:16 (1080×1920, Shorts, Reels, TikTok) |
+| Format | Vertical or horizontal? | Vertical 9:16 (Recommended) (1080×1920, Shorts, Reels, TikTok) · Horizontal 16:9 (1920×1080, YouTube and desktop) |
 | Model | Which model should the render agent use? | Opus (Recommended) (works on any plan) · Fable (most capable, needs Fable access) |
 | Effort | How much effort? | High (Recommended) · Medium · Low · Xhigh. Say in the question that "max" can be typed in Other. |
 
