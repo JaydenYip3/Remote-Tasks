@@ -21,7 +21,7 @@ What type of video?
 └─ Character-driven     → WIP, not implemented yet
 ```
 
-For voiceover videos, the render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. Silent videos skip the voice steps. You get the `.mp4` path back when it's done.
+For voiceover videos, the render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. Silent videos skip the voice steps but still get music and sound effects. You get the `.mp4` path back when it's done.
 
 #### Adding a new animation style
 

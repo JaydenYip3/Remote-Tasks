@@ -124,16 +124,17 @@ Voiceover animation: narrate the script with TTS and animate to it.
 ### Silent template
 
 ```
-Create a silent animated video from the request below. Work in the current
+Create an animated video with no narration from the request below. Work in the current
 directory and follow its CLAUDE.md / existing pipeline. Run the job to
 completion without asking questions; if something is ambiguous, make a
 reasonable choice and note it in your final summary. When done, print the
 path(s) of the finished video file(s) and a short summary.
 
 ## Video type
-Silent animation: no narration, no TTS and no transcription. Skip the voice
-steps of the pipeline and drive the timing from the animation itself. On-screen
-text is fine if it suits the style.
+Silent animation: no narration, so no TTS and no transcription. Skip the voice
+steps of the pipeline and drive the timing from the animation itself. "Silent"
+only means no voice: the video must still have a music track and sound effects
+that fit the scenes. On-screen text is fine if it suits the style.
 
 ## Animation style
 {style}
