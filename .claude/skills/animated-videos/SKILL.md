@@ -42,6 +42,7 @@ VIDEO_REQUEST {
   "type": "voiceover",
   "script": "…",
   "voice_model": "v1",
+  "format": "horizontal",
   "style": "sci-fi-sitcom-thinline",
   "direction": "skip"
 }
@@ -52,6 +53,7 @@ VIDEO_REQUEST {
 | `type` | `voiceover`, `silent` | always |
 | `script` | text, verbatim | voiceover (required) |
 | `voice_model` | `v1` (default), `v2` | voiceover |
+| `format` | `horizontal` (16:9, 1920×1080, default), `vertical` (9:16, 1080×1920) | voiceover, silent |
 | `style` | `sci-fi-sitcom-thinline` (the only style for now) | voiceover, silent |
 | `direction` | text, verbatim, or `skip` | voiceover (optional), silent (required) |
 
@@ -61,7 +63,7 @@ in `~/code/videos/.claude/skills/`, update both files (see the README).
 - Parse it as JSON. Use `script` and `direction` exactly as given, with
   their wording, line breaks and punctuation.
 - If a field is missing, use the default: `v1` for `voice_model`,
-  `sci-fi-sitcom-thinline` for `style`, `skip` for `direction`.
+  `horizontal` for `format`, `sci-fi-sitcom-thinline` for `style`, `skip` for `direction`.
 - If `type` is `voiceover` and `script` is missing or empty, ask for the
   script. If `type` is `silent` and `direction` is `skip`, ask once for at
   least a topic or a one-line description.
@@ -80,16 +82,17 @@ choice and a plain message for free text:
    and stop.
 2. **Voiceover only:** the script (free text, required, verbatim), then the
    voice model: `v1 (Recommended)` / `v2`.
-3. **Animation style:** `sci-fi-sitcom-thinline` is the only style for now,
+3. **Format:** Horizontal (16:9) (Recommended) / Vertical (9:16).
+4. **Animation style:** `sci-fi-sitcom-thinline` is the only style for now,
    so don't ask. Tell the user it will be used.
-4. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
+5. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
    (Describe it, or say 'skip' to let the server decide.)" Required for
    silent videos, so ask once more if it's skipped.
 
 ## 2. Write the prompt file
 
 Before writing, show the user a short summary of their choices (type, voice
-model, style, whether direction was given, and the first line of the script)
+model, format, style, whether direction was given, and the first line of the script)
 and send it without waiting. Only stop if the user corrects something.
 
 Write the prompt to a file in your scratchpad directory (e.g.
@@ -110,6 +113,9 @@ Voiceover animation: narrate the script with TTS and animate to it.
 
 ## Voice model
 {voice model}
+
+## Format
+{format: "Horizontal, 16:9 (1920×1080)" or "Vertical, 9:16 (1080×1920)"}
 
 ## Animation style
 {style}
@@ -135,6 +141,9 @@ Silent animation: no narration, so no TTS and no transcription. Skip the voice
 steps of the pipeline and drive the timing from the animation itself. "Silent"
 only means no voice: the video must still have a music track and sound effects
 that fit the scenes. On-screen text is fine if it suits the style.
+
+## Format
+{format: "Horizontal, 16:9 (1920×1080)" or "Vertical, 9:16 (1080×1920)"}
 
 ## Animation style
 {style}

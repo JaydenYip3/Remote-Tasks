@@ -16,8 +16,8 @@ Makes a short animated video. Run `/animated-videos` and Claude sends you a form
 
 ```
 What type of video?
-├─ Voiceover animation  → script → voice model (v1 | v2) → animation style → scenes / direction / mood
-├─ Silent animation     → animation style → scenes / direction / mood
+├─ Voiceover animation  → script → voice model (v1 | v2) → format (horizontal | vertical) → animation style → scenes / direction / mood
+├─ Silent animation     → format (horizontal | vertical) → animation style → scenes / direction / mood
 └─ Character-driven     → WIP, not implemented yet
 ```
 
