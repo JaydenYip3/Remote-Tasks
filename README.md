@@ -12,16 +12,16 @@ Each job type is a skill in `.claude/skills/`. Start one with `/<skill-name>` an
 
 ### `animated-videos`
 
-Makes a short animated video from a script.
+Makes a short animated video. Run `/animated-videos` and answer a few questions before anything is sent to the render machine:
 
 ```
-Script: <your script>
-Voice Model [optional, default v1]: v1 | v2
-Animation Direction [optional]: <look you want>
+What type of video?
+├─ Voiceover animation  → script → voice model (v1 | v2) → animation style → scenes / direction / mood
+├─ Silent animation     → animation style → scenes / direction / mood
+└─ Character-driven     → WIP, not implemented yet
 ```
 
-
-The render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. You get the `.mp4` path back when it's done. Visit here to view [orchestration](https://github.com/JaydenYip3/Video-Orchestration) model that ties this whole video process.
+For voiceover videos, the render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. Silent videos skip the voice steps. You get the `.mp4` path back when it's done.
 
 ## Setup
 
