@@ -12,12 +12,12 @@ Each job type is a skill in `.claude/skills/`. Start one with `/<skill-name>` an
 
 ### `animated-videos`
 
-Makes a short animated video. Run `/animated-videos` and Claude sends you a form ([`form.html`](.claude/skills/animated-videos/form.html)). Fill it in, press **Send**, and paste the result back into the chat. It only shows the questions that apply to the video type you pick:
+Makes a short animated video. Run `/animated-videos` and Claude sends you a form ([`form.html`](.claude/skills/animated-videos/form.html)). Fill it in, press **Send**, and paste the result back into the chat. It only shows the questions that apply to the video type you pick, with the choices first and the text boxes at the bottom:
 
 ```
 What type of video?
-├─ Voiceover animation  → script → voice model (v1 | v2) → model (Opus | Fable) + effort → format (horizontal | vertical) → animation style → scenes / direction / mood
-├─ Silent animation     → model (Opus | Fable) + effort → format (horizontal | vertical) → animation style → scenes / direction / mood
+├─ Voiceover animation  → format (horizontal | vertical) → animation style → voice model (v1 | v2) → model (Opus | Fable) + effort → script → scenes / direction / mood
+├─ Silent animation     → format (horizontal | vertical) → animation style → model (Opus | Fable) + effort → scenes / direction / mood
 └─ Character-driven     → WIP, not implemented yet
 ```
 
