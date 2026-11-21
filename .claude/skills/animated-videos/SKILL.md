@@ -30,7 +30,7 @@ Then ask the user to fill it in, press **Send**, and paste the result back. Wait
 for the reply.
 
 If the user already gave every answer when invoking the skill (for example
-they pasted a script and named a style), skip the form. If they gave some
+they pasted a script and said what they want), skip the form. If they gave some
 answers, still send the form and tell them which of their answers you'll use.
 
 ### Read the pasted result
@@ -42,7 +42,7 @@ VIDEO_REQUEST {
   "type": "voiceover",
   "script": "…",
   "voice_model": "v1",
-  "style": "server decides",
+  "style": "sci-fi-sitcom-thinline",
   "direction": "skip"
 }
 ```
@@ -52,13 +52,13 @@ VIDEO_REQUEST {
 | `type` | `voiceover`, `silent` | always |
 | `script` | text, verbatim | voiceover (required) |
 | `voice_model` | `v1` (default), `v2` | voiceover |
-| `style` | `server decides`, a listed style, or the user's own text | voiceover, silent |
+| `style` | `sci-fi-sitcom-thinline` (the only style for now) | voiceover, silent |
 | `direction` | text, verbatim, or `skip` | voiceover (optional), silent (required) |
 
 - Parse it as JSON. Use `script` and `direction` exactly as given, with
   their wording, line breaks and punctuation.
 - If a field is missing, use the default: `v1` for `voice_model`,
-  `server decides` for `style`, `skip` for `direction`.
+  `sci-fi-sitcom-thinline` for `style`, `skip` for `direction`.
 - If `type` is `voiceover` and `script` is missing or empty, ask for the
   script. If `type` is `silent` and `direction` is `skip`, ask once for at
   least a topic or a one-line description.
@@ -77,9 +77,8 @@ choice and a plain message for free text:
    and stop.
 2. **Voiceover only:** the script (free text, required, verbatim), then the
    voice model: `v1 (Recommended)` / `v2`.
-3. **Animation style:** Server decides (Recommended) / Flat motion graphics /
-   Kinetic typography / Hand-drawn / sketch. The user can type their own
-   style through "Other".
+3. **Animation style:** `sci-fi-sitcom-thinline` is the only style for now,
+   so don't ask. Tell the user it will be used.
 4. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
    (Describe it, or say 'skip' to let the server decide.)" Required for
    silent videos, so ask once more if it's skipped.
@@ -92,7 +91,7 @@ and send it without waiting. Only stop if the user corrects something.
 
 Write the prompt to a file in your scratchpad directory (e.g.
 `<scratchpad>/video-prompt.md`). Use the template for the chosen type and drop
-any section whose value is "server decides" or skipped.
+any section whose value is skipped.
 
 ### Voiceover template
 
