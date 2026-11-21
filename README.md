@@ -23,6 +23,14 @@ What type of video?
 
 For voiceover videos, the render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. Silent videos skip the voice steps. You get the `.mp4` path back when it's done.
 
+#### Adding a new animation style
+
+The form only offers the styles listed in it. Right now that's `sci-fi-sitcom-thinline`. Whenever you add a new style skill in `~/code/videos/.claude/skills/`, update this repo too:
+
+1. Add an option for it to the **Animation style** group in [`form.html`](.claude/skills/animated-videos/form.html). Set `data-value` to the style's folder name.
+2. Add it to the `style` row of the field table in [`SKILL.md`](.claude/skills/animated-videos/SKILL.md), and to the chat fallback list there. Once there's more than one style, change the fallback step back to asking which one.
+3. If the new style should be the default, change the default `style` in `SKILL.md` and move `aria-pressed="true"` to its option in `form.html`.
+
 ## Setup
 
 Copy `scripts/.env.example` to `scripts/.env` in each skill and fill in the remote machine's MAC address, host, user and working directory.

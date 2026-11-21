@@ -53,6 +53,9 @@ VIDEO_REQUEST {
 | `script` | text, verbatim | voiceover (required) |
 | `voice_model` | `v1` (default), `v2` | voiceover |
 | `style` | `sci-fi-sitcom-thinline` (the only style for now) | voiceover, silent |
+
+The styles must match the options in `form.html`. When a new style is added
+in `~/code/videos/.claude/skills/`, update both files (see the README).
 | `direction` | text, verbatim, or `skip` | voiceover (optional), silent (required) |
 
 - Parse it as JSON. Use `script` and `direction` exactly as given, with
