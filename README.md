@@ -16,12 +16,14 @@ Makes a short animated video. Run `/animated-videos` and Claude sends you a form
 
 ```
 What type of video?
-├─ Voiceover animation  → script → voice model (v1 | v2) → format (horizontal | vertical) → animation style → scenes / direction / mood
-├─ Silent animation     → format (horizontal | vertical) → animation style → scenes / direction / mood
+├─ Voiceover animation  → script → voice model (v1 | v2) → model (Opus | Fable) + effort → format (horizontal | vertical) → animation style → scenes / direction / mood
+├─ Silent animation     → model (Opus | Fable) + effort → format (horizontal | vertical) → animation style → scenes / direction / mood
 └─ Character-driven     → WIP, not implemented yet
 ```
 
 For voiceover videos, the render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. Silent videos skip the voice steps but still get music and sound effects. You get the `.mp4` path back when it's done.
+
+The model and effort (low to max) are passed to `claude` on the render machine as `--model` and `--effort`. If you pick Fable and that machine's account can't use it, the job stops before it starts and Claude reminds you, so you can rerun it with Opus.
 
 #### Adding a new animation style
 

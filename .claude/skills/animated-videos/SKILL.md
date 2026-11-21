@@ -33,6 +33,10 @@ If the user already gave every answer when invoking the skill (for example
 they pasted a script and said what they want), skip the form. If they gave some
 answers, still send the form and tell them which of their answers you'll use.
 
+If the user picks Fable, remind them in your reply that it only works if the
+account on the render machine has Fable access, and that the job stops before
+it starts if it doesn't.
+
 ### Read the pasted result
 
 The user pastes a block like this:
@@ -42,6 +46,8 @@ VIDEO_REQUEST {
   "type": "voiceover",
   "script": "…",
   "voice_model": "v1",
+  "model": "opus",
+  "effort": "high",
   "format": "horizontal",
   "style": "sci-fi-sitcom-thinline",
   "direction": "skip"
@@ -53,6 +59,8 @@ VIDEO_REQUEST {
 | `type` | `voiceover`, `silent` | always |
 | `script` | text, verbatim | voiceover (required) |
 | `voice_model` | `v1` (default), `v2` | voiceover |
+| `model` | `opus` (default), `fable` | voiceover, silent |
+| `effort` | `low`, `medium`, `high` (default), `xhigh`, `max` | voiceover, silent |
 | `format` | `horizontal` (16:9, 1920×1080, default), `vertical` (9:16, 1080×1920) | voiceover, silent |
 | `style` | `sci-fi-sitcom-thinline` (the only style for now) | voiceover, silent |
 | `direction` | text, verbatim, or `skip` | voiceover (optional), silent (required) |
@@ -63,7 +71,7 @@ in `~/code/videos/.claude/skills/`, update both files (see the README).
 - Parse it as JSON. Use `script` and `direction` exactly as given, with
   their wording, line breaks and punctuation.
 - If a field is missing, use the default: `v1` for `voice_model`,
-  `horizontal` for `format`, `sci-fi-sitcom-thinline` for `style`, `skip` for `direction`.
+  `opus` for `model`, `high` for `effort`, `horizontal` for `format`, `sci-fi-sitcom-thinline` for `style`, `skip` for `direction`.
 - If `type` is `voiceover` and `script` is missing or empty, ask for the
   script. If `type` is `silent` and `direction` is `skip`, ask once for at
   least a topic or a one-line description.
@@ -82,17 +90,21 @@ choice and a plain message for free text:
    and stop.
 2. **Voiceover only:** the script (free text, required, verbatim), then the
    voice model: `v1 (Recommended)` / `v2`.
-3. **Format:** Horizontal (16:9) (Recommended) / Vertical (9:16).
-4. **Animation style:** `sci-fi-sitcom-thinline` is the only style for now,
+3. **Model:** Opus (Recommended) / Fable. If they pick Fable, remind them it
+   needs Fable access on the render machine's account.
+4. **Effort:** low / medium / high (Recommended) / xhigh / max. Offer four of
+   these as options and let "Other" cover the fifth.
+5. **Format:** Horizontal (16:9) (Recommended) / Vertical (9:16).
+6. **Animation style:** `sci-fi-sitcom-thinline` is the only style for now,
    so don't ask. Tell the user it will be used.
-5. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
+7. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
    (Describe it, or say 'skip' to let the server decide.)" Required for
    silent videos, so ask once more if it's skipped.
 
 ## 2. Write the prompt file
 
 Before writing, show the user a short summary of their choices (type, voice
-model, format, style, whether direction was given, and the first line of the script)
+model, model and effort, format, style, whether direction was given, and the first line of the script)
 and send it without waiting. Only stop if the user corrects something.
 
 Write the prompt to a file in your scratchpad directory (e.g.
@@ -155,8 +167,11 @@ that fit the scenes. On-screen text is fine if it suits the style.
 ## 3. Run the hand-off script
 
 ```bash
-.claude/skills/animated-videos/scripts/remote-task.sh -f <scratchpad>/video-prompt.md
+.claude/skills/animated-videos/scripts/remote-task.sh --model <model> --effort <effort> -f <scratchpad>/video-prompt.md
 ```
+
+`--model` and `--effort` take the values from the form. They're passed to the
+remote `claude`, not written into the prompt.
 
 Run it with `run_in_background: true` (renders can take a long time) and
 wait for the completion notification rather than polling.
@@ -166,10 +181,13 @@ The script, in order:
    wake-up and will **not** power it off at the end.
 2. Otherwise sends a Wake-on-LAN packet to `$WOL_MAC` and polls SSH on
    `$REMOTE_USER@$REMOTE_HOST` until it answers (up to `$BOOT_TIMEOUT`s).
-3. Runs `claude -p` in `$REMOTE_DIR` with the prompt on stdin. The remote agent
+3. If the model is Fable, makes a one-line test call with Fable on the remote
+   machine. If that fails, it prints `FABLE_UNAVAILABLE`, powers the server
+   off if it woke it, and exits 4 without starting the job.
+4. Runs `claude -p` in `$REMOTE_DIR` with the prompt on stdin. The remote agent
    handles everything from there, and its final output is printed.
-4. Checks that a new `.mp4` was produced (exit 3 if not).
-5. Powers the server off (`POWEROFF_AFTER=1`, the default), but only if this
+5. Checks that a new `.mp4` was produced (exit 3 if not).
+6. Powers the server off (`POWEROFF_AFTER=1`, the default), but only if this
    run woke it up.
 
 Config lives in environment variables or `scripts/.env` (see
@@ -183,3 +201,7 @@ is unset, tell the user to fill in `scripts/.env`. Never guess a MAC or IP.
 - On failure: say which step failed (wake / SSH timeout / Claude exit code /
   no video produced) and show the relevant output lines. Do not retry more
   than once without asking.
+- Exit 4 / `FABLE_UNAVAILABLE`: remind the user that the render machine's
+  account doesn't seem to have Fable (show the last output lines, since a
+  network error can look the same), and ask whether to run it with Opus
+  instead. Don't switch models without asking.

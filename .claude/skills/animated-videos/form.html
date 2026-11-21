@@ -65,6 +65,11 @@
   textarea.script { min-height: 180px; }
   input:focus, textarea:focus { outline: none; border-color: var(--accent); }
 
+  .range { display: flex; align-items: center; gap: 12px; font-size: 13px; color: var(--muted); }
+  .range input { flex: 1; min-width: 0; accent-color: var(--accent); }
+  .range-value { font-size: 13px; color: var(--text); }
+  .range-value strong { font-weight: 600; }
+
   .btn { padding: 8px 16px; border-radius: var(--radius); font: inherit; font-size: 14px;
          cursor: pointer; border: 1px solid var(--border); background: var(--card); color: var(--text); }
   .btn.primary { background: var(--text); color: var(--card); border-color: var(--text); }
@@ -121,6 +126,34 @@
         <button type="button" class="option" data-value="v1" aria-pressed="true">v1 (Recommended)</button>
         <button type="button" class="option" data-value="v2">v2</button>
       </div>
+    </div>
+
+    <!-- Voiceover + silent: model -->
+    <div class="group" data-show="voiceover silent" hidden>
+      <label class="question">Model for the render agent</label>
+      <div class="options" data-name="model">
+        <button type="button" class="option card" data-value="opus" aria-pressed="true">
+          <span><strong>Opus</strong><span class="sub">Works on any plan</span></span>
+        </button>
+        <button type="button" class="option card" data-value="fable">
+          <span><strong>Fable</strong><span class="sub">Most capable, needs Fable access</span></span>
+        </button>
+      </div>
+      <div class="note" id="fable-note" hidden>
+        Does the account on the render machine have Fable? If it doesn't, the job stops before it
+        starts and Claude will tell you, so you can run it with Opus instead.
+      </div>
+    </div>
+
+    <!-- Voiceover + silent: effort -->
+    <div class="group" data-show="voiceover silent" hidden>
+      <label class="question" for="effort">Effort
+        <span class="hint">Higher effort thinks longer and costs more.</span></label>
+      <div class="range"><span>Low</span>
+        <input id="effort" type="range" min="0" max="4" step="1" value="2" data-name="effort"
+               data-levels="low medium high xhigh max" aria-describedby="effort-value">
+        <span>Max</span></div>
+      <div class="range-value" id="effort-value">Effort: <strong>high</strong></div>
     </div>
 
     <!-- Voiceover + silent: format -->
@@ -195,6 +228,12 @@
     result.hidden = true;
   }
 
+  const effort = document.getElementById('effort');
+  const effortLevel = () => effort.dataset.levels.split(' ')[Number(effort.value)];
+  effort.addEventListener('input', () => {
+    document.querySelector('#effort-value strong').textContent = effortLevel();
+  });
+
   // Every option group is single choice.
   form.querySelectorAll('.options').forEach(group => {
     group.addEventListener('click', e => {
@@ -210,6 +249,9 @@
       }
       clearError(group);
       if (group.dataset.name === 'type') applyBranch();
+      if (group.dataset.name === 'model') {
+        document.getElementById('fable-note').hidden = opt.dataset.value !== 'fable';
+      }
     });
   });
 
@@ -252,6 +294,8 @@
       }
       data[el.dataset.name] = empty ? 'skip' : el.value;
     });
+
+    if (!effort.closest('.group').hidden) data.effort = effortLevel();
 
     return valid ? data : null;
   }

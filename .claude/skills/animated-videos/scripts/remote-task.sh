@@ -5,6 +5,14 @@
 #   remote-task.sh "prompt text"          # prompt as argument
 #   remote-task.sh < prompt.txt           # prompt on stdin
 #   remote-task.sh -f prompt.txt          # prompt from file
+#   remote-task.sh --model fable --effort high -f prompt.txt
+#
+# Options (before the prompt):
+#   --model  opus | fable                    model for the remote claude
+#   --effort low | medium | high | xhigh | max
+#
+# With --model fable, a one-line test call runs first. If the remote account
+# can't use Fable, the script stops with exit 4 before starting the job.
 #
 # Config comes from environment variables. If a .env file sits next to this
 # script, it is loaded first (real environment values still win).
@@ -44,6 +52,21 @@ CLAUDE_ARGS="${CLAUDE_ARGS:---dangerously-skip-permissions}"
 POWEROFF_AFTER="${POWEROFF_AFTER:-1}"
 
 log() { printf '[%s] %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
+
+# ---- read options -----------------------------------------------------------
+MODEL=""; EFFORT=""
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --model)  MODEL="${2:?--model needs a value}"; shift 2 ;;
+    --effort) EFFORT="${2:?--effort needs a value}"; shift 2 ;;
+    *) break ;;
+  esac
+done
+# Whitelist values: they end up inside a remote shell command.
+case "$MODEL" in ""|opus|fable) ;; *) echo "Unknown --model: $MODEL (use opus or fable)" >&2; exit 2 ;; esac
+case "$EFFORT" in ""|low|medium|high|xhigh|max) ;; *) echo "Unknown --effort: $EFFORT" >&2; exit 2 ;; esac
+[[ -n "$MODEL" ]] && CLAUDE_ARGS="$CLAUDE_ARGS --model $MODEL"
+[[ -n "$EFFORT" ]] && CLAUDE_ARGS="$CLAUDE_ARGS --effort $EFFORT"
 
 # ---- read the prompt --------------------------------------------------------
 if [[ "${1:-}" == "-f" ]]; then
@@ -97,6 +120,27 @@ until ssh "${SSH_OPTS[@]}" "$TARGET" true 2>/dev/null; do
   sleep 5
 done
 log "SSH is up"
+fi
+
+# ---- 3b. check fable access --------------------------------------------------
+# A tiny test call, so a missing Fable plan fails here instead of mid-job.
+if [[ "$MODEL" == "fable" ]]; then
+  log "Checking that the remote account can use Fable"
+  set +e
+  check="$(ssh "${SSH_OPTS[@]}" "$TARGET" \
+    "bash -lc 'cd $(printf '%q' "$REMOTE_DIR") && timeout 180 claude -p --model fable --output-format json \"Reply with only: OK\"'" 2>&1)"
+  check_status=$?
+  set -e
+  if [[ "$check_status" != "0" || "$check" == *'"is_error":true'* ]]; then
+    log "FABLE_UNAVAILABLE: the remote claude could not run Fable (status $check_status). Job not started."
+    printf '%s\n' "$check" | tail -n 5 >&2
+    if [[ "$POWEROFF_AFTER" == "1" && "$WAS_ON" == "0" ]]; then
+      log "Powering off $REMOTE_HOST"
+      ssh "${SSH_OPTS[@]}" "$TARGET" "systemctl poweroff || poweroff" 2>/dev/null || true
+    fi
+    exit 4
+  fi
+  log "Fable is available"
 fi
 
 # ---- 4. run claude in the remote dir ---------------------------------------
