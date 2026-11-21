@@ -12,16 +12,28 @@ Each job type is a skill in `.claude/skills/`. Start one with `/<skill-name>` an
 
 ### `animated-videos`
 
-Makes a short animated video. Run `/animated-videos` and answer a few questions before anything is sent to the render machine:
+Makes a short animated video. Run `/animated-videos` and Claude asks you everything in the chat. The general options come first, as one multiple-choice prompt that goes through when you press submit. The text (script, direction) comes last, as plain messages:
 
 ```
-What type of video?
-├─ Voiceover animation  → script → voice model (v1 | v2) → animation style → scenes / direction / mood
-├─ Silent animation     → animation style → scenes / direction / mood
-└─ Character-driven     → WIP, not implemented yet
+1. One prompt: video type · format (vertical, the default | horizontal) · model (Opus | Fable) · effort (low to max)
+   └─ Character-driven → WIP, not implemented yet
+2. Voiceover only: voice model (v1 | v2)
+3. Text: script (voiceover only) → scenes / direction / mood (required for silent)
 ```
 
-For voiceover videos, the render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. Silent videos skip the voice steps. You get the `.mp4` path back when it's done.
+The animation style is `sci-fi-sitcom-thinline`, the only one for now, so it isn't asked.
+
+For voiceover videos, the render machine narrates the script with the Breeze TTS model (8-bit quantized), transcribes it, then animates and renders it in Remotion. Silent videos skip the voice steps but still get music and sound effects. You get the `.mp4` path back when it's done.
+
+The model and effort (low to max) are passed to `claude` on the render machine as `--model` and `--effort`. If you pick Fable and that machine's account can't use it, the job stops before it starts and Claude reminds you, so you can rerun it with Opus.
+
+#### Adding a new animation style
+
+The skill only knows the styles listed in it. Right now that's `sci-fi-sitcom-thinline`. Whenever you add a new style skill in `~/code/videos/.claude/skills/`, update [`SKILL.md`](.claude/skills/animated-videos/SKILL.md) too:
+
+1. Add the style, by its folder name, to the **Animation style** section.
+2. Once there's more than one style, add a Style question to the voice-model prompt (step 2). Step 1's prompt is already full at four questions, which is the most one prompt can hold.
+3. If the new style should be the default, list it first and mark it (Recommended).
 
 ## Setup
 
