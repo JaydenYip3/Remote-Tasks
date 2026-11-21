@@ -1,79 +1,88 @@
 ---
 name: animated-videos
-description: Hand off an animated-video job to the remote Linux server. Use when the user wants an animated video (voiceover, silent, or character-driven). First walks the user through a short decision tree of questions (video type, then script / voice model / animation style / scene direction as needed), then wakes the server over LAN, SSHes into /root/code/orchestration, starts a Claude agent there with the formatted request, waits for it to finish, then powers the server off. This agent only collects inputs and forwards the request; it does not make the video itself.
+description: Hand off an animated-video job to the remote Linux server. Use when the user wants an animated video (voiceover, silent, or character-driven). First sends the user an HTML form (video type, then script / voice model / animation style / scene direction as needed) and reads back the answers they paste, then wakes the server over LAN, SSHes into /root/code/orchestration, starts a Claude agent there with the formatted request, waits for it to finish, then powers the server off. This agent only collects inputs and forwards the request; it does not make the video itself.
 ---
 
 # Animated videos (remote hand-off)
 
-Your only job is to collect the user's choices through the decision tree below,
+Your only job is to collect the user's choices with the form below,
 format them, and forward them to an agent on the remote server. Do not write,
 edit or improve the script, do not plan the animation, and do not do any of
 the video work locally.
 
-## 1. Decision tree
+## 1. Collect the answers with the form
 
-Ask the questions **one step at a time**, in the order below. Use
-`AskUserQuestion` for multiple-choice steps. For free-text steps (script,
-direction), ask in a plain message and wait for the reply.
+The questions live in one HTML form, [`form.html`](form.html), next to this
+file. It shows only the questions that apply to the chosen video type, checks
+required fields, and gives the user a `VIDEO_REQUEST {...}` JSON block to paste
+back. You don't need to ask the questions one by one.
 
-If the user already gave an answer when invoking the skill (e.g. they pasted a
-script or named a style), use it and skip that question. Don't ask again.
+### Send the form
 
-### Step 1: Video type (multiple choice)
+1. Publish `form.html` with the Artifact tool and give the user the link. If
+   you already published it in this conversation, republish the same
+   `file_path` instead of creating a new artifact. Don't change the file.
+2. If the Artifact tool isn't available, send the file with `SendUserFile`.
+3. If neither works, or the user says they'd rather answer in chat, use the
+   [chat fallback](#chat-fallback) below.
 
-Ask: "What type of animated video?"
+Then ask the user to fill it in, press **Send**, and paste the result back. Wait
+for the reply.
 
-| Option | Description |
-|---|---|
-| Voiceover animation | A narrator reads your script over the animation |
-| Silent animation | Animation only, no narration |
-| Character-driven animation | Characters speak on screen (WIP) |
+If the user already gave every answer when invoking the skill (for example
+they pasted a script and named a style), skip the form. If they gave some
+answers, still send the form and tell them which of their answers you'll use.
 
-Then follow the matching branch.
+### Read the pasted result
 
-### Branch A: Voiceover animation
+The user pastes a block like this:
 
-1. **Script (free text, required).** Ask the user to send the script. Keep it
-   exactly as given (wording, line breaks, punctuation). Do not continue
-   without it.
-2. **Voice model (multiple choice).** Options: `v1 (Recommended)` (the default)
-   and `v2`. If the user skips this question, use `v1`.
-3. **Animation style.** Follow the [Animation style](#animation-style) step.
-4. **Scenes / direction / mood.** Follow the
-   [Scenes / direction / mood](#scenes--direction--mood) step.
+```
+VIDEO_REQUEST {
+  "type": "voiceover",
+  "script": "…",
+  "voice_model": "v1",
+  "style": "server decides",
+  "direction": "skip"
+}
+```
 
-### Branch B: Silent animation
+| Field | Values | Shown for |
+|---|---|---|
+| `type` | `voiceover`, `silent` | always |
+| `script` | text, verbatim | voiceover (required) |
+| `voice_model` | `v1` (default), `v2` | voiceover |
+| `style` | `server decides`, a listed style, or the user's own text | voiceover, silent |
+| `direction` | text, verbatim, or `skip` | voiceover (optional), silent (required) |
 
-1. **Animation style.** Follow the [Animation style](#animation-style) step.
-2. **Scenes / direction / mood.** Follow the
-   [Scenes / direction / mood](#scenes--direction--mood) step. For a silent
-   video this is the main content brief, so if the user skips it, ask once
-   more for at least a topic or a one-line description. A silent video needs
-   something to animate.
+- Parse it as JSON. Use `script` and `direction` exactly as given, with
+  their wording, line breaks and punctuation.
+- If a field is missing, use the default: `v1` for `voice_model`,
+  `server decides` for `style`, `skip` for `direction`.
+- If `type` is `voiceover` and `script` is missing or empty, ask for the
+  script. If `type` is `silent` and `direction` is `skip`, ask once for at
+  least a topic or a one-line description.
+- The form blocks character-driven videos. If one still comes through, say
+  it's a work in progress and offer voiceover or silent. Don't wake the server.
+- If the paste isn't valid JSON, ask the user to copy it again with the
+  form's **Copy** button. Don't guess what it meant.
 
-### Branch C: Character-driven animation (WIP)
+### Chat fallback
 
-Not implemented yet. Tell the user that character-driven videos are still a
-work in progress, and offer voiceover or silent instead. Stop here. Do not
-wake the server.
+Ask the same questions one at a time. Use `AskUserQuestion` for multiple
+choice and a plain message for free text:
 
-### Animation style
-
-Ask with `AskUserQuestion` (multiple choice). The user can also type their own
-style through "Other".
-
-| Option | Description |
-|---|---|
-| Server decides (Recommended) | Let the remote agent pick a style that fits |
-| Flat motion graphics | Clean 2D shapes, icons and smooth transitions |
-| Kinetic typography | Animated text is the main visual |
-| Hand-drawn / sketch | Whiteboard or doodle look |
-
-### Scenes / direction / mood
-
-Ask in a plain message: "Any specific scenes, direction or mood? (Describe it,
-or say 'skip' to let the server decide.)" Pass along whatever the user writes,
-verbatim.
+1. **Video type:** Voiceover animation / Silent animation / Character-driven
+   animation (WIP). Character-driven isn't built yet, so offer the other two
+   and stop.
+2. **Voiceover only:** the script (free text, required, verbatim), then the
+   voice model: `v1 (Recommended)` / `v2`.
+3. **Animation style:** Server decides (Recommended) / Flat motion graphics /
+   Kinetic typography / Hand-drawn / sketch. The user can type their own
+   style through "Other".
+4. **Scenes / direction / mood:** "Any specific scenes, direction or mood?
+   (Describe it, or say 'skip' to let the server decide.)" Required for
+   silent videos, so ask once more if it's skipped.
 
 ## 2. Write the prompt file
 

@@ -12,7 +12,7 @@ Each job type is a skill in `.claude/skills/`. Start one with `/<skill-name>` an
 
 ### `animated-videos`
 
-Makes a short animated video. Run `/animated-videos` and answer a few questions before anything is sent to the render machine:
+Makes a short animated video. Run `/animated-videos` and Claude sends you a form ([`form.html`](.claude/skills/animated-videos/form.html)). Fill it in, press **Send**, and paste the result back into the chat. It only shows the questions that apply to the video type you pick:
 
 ```
 What type of video?
