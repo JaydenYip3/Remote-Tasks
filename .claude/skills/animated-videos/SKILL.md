@@ -43,8 +43,13 @@ back unanswered, use the default.
 
 ### Step 2: voice model (voiceover only)
 
-One `AskUserQuestion` call: "Which voice model?" with `v1 (Recommended)` and
-`v2`. Default `v1`.
+One `AskUserQuestion` call: "Which voice model?" with `v1 (Recommended)`,
+`v2` and `v3` (energetic young American, YouTuber style). Default `v1`.
+
+The voices are files in `/root/code/breeze_tts/voices/` on the render
+machine: `v1` and `v2` are cloned voices (`.breeze`), `v3` is a designed voice
+(`v3.txt`, a description plus `cfg`). When a voice is added there, add it here
+and to the README.
 
 ### Animation style
 
